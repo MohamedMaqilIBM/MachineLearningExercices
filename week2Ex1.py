@@ -3,7 +3,7 @@ import pandas as pd;
 import matplotlib.pyplot as plt;
 
 
-class week2Ex1():
+class Week2Ex1():
   
   def __init__(self):
      np.random.seed(1)
@@ -39,14 +39,14 @@ class week2Ex1():
     return sigma;
 
 if __name__ == "__main__":
-    linear_regression = week2Ex1();
+    linear_regression = Week2Ex1();
 
     # data = pd.read_csv('ex1data1.txt',names=["X","y"])
 
     # X = data["X"];
     # y = data["y"];
 
-    data = np.loadtxt('exercices/ex1data1.txt', delimiter=',');
+    data = np.loadtxt('training_data/ex1data1.txt', delimiter=',');
     X, y = data[:, 0], data[:, 1];
     
     

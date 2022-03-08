@@ -4,7 +4,7 @@ import utils
 from matplotlib import pyplot as plt
 import scipy.optimize as optimize
 
-class week3Ex2():
+class Week3Ex2():
   
   def __init__(self):
      np.random.seed(1)
@@ -52,9 +52,9 @@ class week3Ex2():
     return p
 
 if __name__ == "__main__":
-    regularized_logistic_regression = week3Ex2();
+    regularized_logistic_regression = Week3Ex2();
 
-    data = np.loadtxt('exercices/ex2data2.txt', delimiter=',');
+    data = np.loadtxt('training_data/ex2data2.txt', delimiter=',');
     X, y = data[:, :2], data[:, 2]
     [m, n] = X.shape
 
