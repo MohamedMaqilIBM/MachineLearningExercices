@@ -35,8 +35,15 @@ class week2Ex1():
     grad = (1 / m) * (h - y).dot(X)
     return J, grad
 
+  def predict(self, theta, X):
+    m = X.shape[0]
+    p = np.zeros(m)
+
+    p = np.round(self.sigmoid(X.dot(theta.T)))
+    return p
+
 if __name__ == "__main__":
-    sigmoid = week2Ex1();
+    logistic_regression = week2Ex1();
 
     data = np.loadtxt('ex2data1.txt', delimiter=',');
     X, y = data[:, 0:2], data[:, 2]
@@ -48,30 +55,21 @@ if __name__ == "__main__":
     for i in range(10):
       print(X[i, 0], X[i, 1], y[i])
 
-    # sigmoid.plotData(X, y);
-
+    logistic_regression.plotData(X, y)
     # add axes labels
-    # plt.xlabel('Exam 1 score')
-    # plt.ylabel('Exam 2 score')
-    # plt.legend(['Admitted', 'Not admitted'])
-    # plt.show()
-
-    # pos = y == 1
-    # neg = y == 0
-
-    # # Plot Examples
-    # plt.plot(X[pos, 0], X[pos, 1], 'k*', lw=2, ms=10)
-    # plt.plot(X[neg, 0], X[neg, 1], 'ko', mfc='y', ms=8, mec='k', mew=1)
-    # plt.show()
+    plt.xlabel('Exam 1 score')
+    plt.ylabel('Exam 2 score')
+    plt.legend(['Admitted', 'Not admitted'])
+    pass
 
     # Add intercept term to X
     X = np.concatenate([np.ones((m, 1)), X], axis=1)
 
     z = 0
-    g = sigmoid.sigmoid(z)
+    g = logistic_regression.sigmoid(z)
 
     initial_theta = np.zeros(n + 1);
-    cost, grad = sigmoid.costFunction(initial_theta, X, y)
+    cost, grad = logistic_regression.costFunction(initial_theta, X, y)
 
     print('Cost at initial theta (zeros): {:.3f}'.format(cost))
     print('Expected cost (approx): 0.693\n')
@@ -82,7 +80,7 @@ if __name__ == "__main__":
 
     # Compute and display cost and gradient with non-zero theta
     test_theta = np.array([-24, 0.2, 0.2])
-    cost, grad = sigmoid.costFunction(test_theta, X, y)
+    cost, grad = logistic_regression.costFunction(test_theta, X, y)
 
     print('Cost at test theta: {:.3f}'.format(cost))
     print('Expected cost (approx): 0.218\n')
@@ -100,7 +98,7 @@ if __name__ == "__main__":
     # set options for optimize.minimize
     options= {'maxiter': 400}
 
-    res = optimize.minimize(sigmoid.costFunction,
+    res = optimize.minimize(logistic_regression.costFunction,
                             initial_theta,
                             (X, y),
                             jac=True,
@@ -120,3 +118,19 @@ if __name__ == "__main__":
     print('theta:')
     print('\t[{:.3f}, {:.3f}, {:.3f}]'.format(*theta))
     print('Expected theta (approx):\n\t[-25.161, 0.206, 0.201]')
+
+    # Plot Boundary
+    utils.plotDecisionBoundary(logistic_regression.plotData, theta, X, y)
+    # plt.show()
+
+    #  Predict probability for a student with score 45 on exam 1 
+    #  and score 85 on exam 2 
+    prob = logistic_regression.sigmoid(np.dot([1, 45, 85], theta))
+    print('For a student with scores 45 and 85,'
+          'we predict an admission probability of {:.3f}'.format(prob))
+    print('Expected value: 0.775 +/- 0.002\n')
+
+    # Compute accuracy on our training set
+    p = logistic_regression.predict(theta, X)
+    print('Train Accuracy: {:.2f} %'.format(np.mean(p == y) * 100))
+    print('Expected accuracy (approx): 89.00 %')

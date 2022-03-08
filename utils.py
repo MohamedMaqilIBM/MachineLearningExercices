@@ -37,7 +37,7 @@ def mapFeature(X1, X2, degree=6):
     if X1.ndim > 0:
         return np.stack(out, axis=1)
     else:
-        return np.array(out)
+        return np.array(out, dtype=object)
 
 
 def plotDecisionBoundary(plotData, theta, X, y):
