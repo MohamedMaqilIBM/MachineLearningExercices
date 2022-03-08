@@ -1,8 +1,7 @@
-from mimetypes import init
 import numpy as np;
-import utils
-from matplotlib import pyplot as plt
-import scipy.optimize as optimize
+import pandas as pd;
+import matplotlib.pyplot as plt;
+
 
 class week2Ex2():
   
@@ -10,135 +9,114 @@ class week2Ex2():
      np.random.seed(1)
   
   def plotData(self, x, y):
-    fig = plt.figure()
 
-    pos = y == 1
-    neg = y == 0
-
-    # Plot Examples
-    plt.plot(X[pos, 0], X[pos, 1], 'k*', lw=2, ms=10)
-    plt.plot(X[neg, 0], X[neg, 1], 'ko', mfc='y', ms=8, mec='k', mew=1)
-
-  def sigmoid(self, z):
-    z = np.array(z)
-    g = np.zeros(z.shape)
-    g = 1 / (1 + np.exp(-z))
-    return g
-
-  def costFunctionReg(self, theta, X, y, lambda_):
-    m = y.size
-
-    J = 0
-    grad = np.zeros(theta.shape)
-
-    h = self.sigmoid(X.dot(theta.T))
-    
-    temp = theta
-    temp[0] = 0
-    
-    J = (1 / m) * np.sum(-y.dot(np.log(h)) - (1 - y).dot(np.log(1 - h))) + (lambda_ / (2 * m)) * np.sum(np.square(temp))
-
-    grad = (1 / m) * (h - y).dot(X) 
-    grad = grad + (lambda_ / m) * temp
-
-    return J, grad
+    fig = plt.figure()  # open a new figure
+    plt.plot(x, y, 'ro', ms=10, mec='k')
+    plt.ylabel('Profit in $10,000')
+    plt.xlabel('Population of City in 10,000s')
 
   
-  def predict(self, theta, X):
-    m = X.shape[0]
-    p = np.zeros(m)
+  def computeCostMulti(self, X, y, theta):
+    m = y.shape[0];
+    J = 0
 
-    p = np.round(self.sigmoid(X.dot(theta.T)))
-    return p
+    h = np.dot(X, theta)
+    J = (1/(2 * m)) * np.sum(np.square(np.dot(X, theta) - y))
+    return J
+
+  def gradientDescentMulti(self, X, y, theta, alpha, num_iters):
+    m = y.shape[0]
+    theta = theta.copy()
+    J_history = []
+    for i in range(num_iters):
+      theta = theta - (alpha / m) * (np.dot(X, theta) - y).dot(X)
+      J_history.append(self.computeCostMulti(X, y, theta))
+  
+    return theta, J_history
+
+  def featureNormalize(self, X):
+    X_norm = X.copy()
+    mu = np.zeros(X.shape[1])
+    sigma = np.zeros(X.shape[1])
+    m = X.shape[0]
+
+    # mu = np.mean(X, axis = 0)
+    mu[0] = np.average(X[:, :1]);
+    mu[1] = np.average(X[:, 1:2]);
+    sigma = np.std(X, axis = 0)
+
+    X_norm = (X - mu) / sigma;
+    return X_norm, mu,sigma;
+
+  def normalEqn(self, X, y):
+    theta = np.zeros(X.shape[1])
+    theta = np.dot(np.dot(np.linalg.inv(np.dot(X.T,X)),X.T),y)
+    return theta
+
 
 if __name__ == "__main__":
-    regularized_logistic_regression = week2Ex2();
+    feature_normalize = week2Ex2();
 
-    data = np.loadtxt('ex2data2.txt', delimiter=',');
-    X, y = data[:, :2], data[:, 2]
-    [m, n] = X.shape
+    data = np.loadtxt('ex1data2.txt', delimiter=',');
+    X = data[:, :2]
+    y = data[:, 2]
+    m = y.size
 
-    regularized_logistic_regression.plotData(X, y)
-    # Labels and Legend
-    plt.xlabel('Microchip Test 1')
-    plt.ylabel('Microchip Test 2')
+    # % Print out some data points
+    print('{:>8s}{:>8s}{:>10s}'.format('X[:,0]', 'X[:, 1]', 'y'))
+    
+    for i in range(10):
+      print('{:8.0f}{:8.0f}{:10.0f}'.format(X[i, 0], X[i, 1], y[i]))
+    
+    X_norm, mu, sigma = feature_normalize.featureNormalize(X);
 
-    # Specified in plot order
-    plt.legend(['y = 1', 'y = 0'], loc='upper right')
-    # plt.show()
-    # pass
+    print('Computed mean:', mu)
+    print('Computed standard deviation:', sigma)
 
-    # Note that mapFeature also adds a column of ones for us, so the intercept term is handled
-    X = utils.mapFeature(X[:, 0], X[:, 1])
+    # Add intercept term to X
+    X = np.concatenate([np.ones((m, 1)), X_norm], axis=1)
 
-    # Initialize fitting parameters
-    initial_theta = np.zeros(X.shape[1])
+    alpha = 0.1
+    num_iters = 400
 
-    # Set regularization parameter lambda to 1
-    # DO NOT use `lambda` as a variable name in python
-    # because it is a python keyword
-    lambda_ = 1
+    theta = np.zeros(3)
+    theta, J_history = feature_normalize.gradientDescentMulti(X, y, theta, alpha, num_iters)
 
-    # Compute and display initial cost and gradient for regularized logistic
-    # regression
-    cost, grad = regularized_logistic_regression.costFunctionReg(initial_theta, X, y, lambda_)
+    plt.plot(np.arange(len(J_history)), J_history, lw=2)
+    plt.xlabel('Number of iterations')
+    plt.ylabel('Cost J')
+    plt.show()
+    pass
 
-    print('Cost at initial theta (zeros): {:.3f}'.format(cost))
-    print('Expected cost (approx)       : 0.693\n')
+    print('theta computed from gradient descent: {:s}'.format(str(theta)))
 
-    print('Gradient at initial theta (zeros) - first five values only:')
-    print('\t[{:.4f}, {:.4f}, {:.4f}, {:.4f}, {:.4f}]'.format(*grad[:5]))
-    print('Expected gradients (approx) - first five values only:')
-    print('\t[0.0085, 0.0188, 0.0001, 0.0503, 0.0115]\n')
+    # Estimate the price of a 1650 sq-ft, 3 br house
+    X_array = [1, 1650, 3]
+    X_array[1:3] = (X_array[1:3] - mu) / sigma
+    price = np.dot(X_array, theta)   # You should change this
 
-
-    # Compute and display cost and gradient
-    # with all-ones theta and lambda = 10
-    test_theta = np.ones(X.shape[1])
-    cost, grad = regularized_logistic_regression.costFunctionReg(test_theta, X, y, 10)
-
-    print('------------------------------\n')
-    print('Cost at test theta    : {:.2f}'.format(cost))
-    print('Expected cost (approx): 3.16\n')
-
-    print('Gradient at initial theta (zeros) - first five values only:')
-    print('\t[{:.4f}, {:.4f}, {:.4f}, {:.4f}, {:.4f}]'.format(*grad[:5]))
-    print('Expected gradients (approx) - first five values only:')
-    print('\t[0.3460, 0.1614, 0.1948, 0.2269, 0.0922]')
+    print('Predicted price of a 1650 sq-ft, 3 br house (using gradient descent): ${:.0f}'.format(price))
 
 
-    # Initialize fitting parameters
-    initial_theta = np.zeros(X.shape[1])
+    # Normal Equations
+    
+    # Load data
+    data = np.loadtxt('ex1data2.txt', delimiter=',');
+    X = data[:, :2]
+    y = data[:, 2]
+    m = y.size
+    X = np.concatenate([np.ones((m, 1)), X], axis=1)
 
-    # Set regularization parameter lambda to 1 (you should vary this)
-    lambda_ = 1.00
+    # Calculate the parameters from the normal equation
+    theta = feature_normalize.normalEqn(X, y);
+    print('Theta computed from the normal equations: {:s}'.format(str(theta)));
 
-    # set options for optimize.minimize
-    options= {'maxiter': 100}
+    X_array = [1, 1650, 3]
+    X_array[1:3] = (X_array[1:3] - mu) / sigma
+    price = np.dot(X_array, theta)
 
-    res = optimize.minimize(regularized_logistic_regression.costFunctionReg,
-                            initial_theta,
-                            (X, y, lambda_),
-                            jac=True,
-                            method='TNC',
-                            options=options)
+    print('Predicted price of a 1650 sq-ft, 3 br house (using normal equations): ${:.0f}'.format(price))
 
-    # the fun property of OptimizeResult object returns
-    # the value of costFunction at optimized theta
-    cost = res.fun
 
-    # the optimized theta is in the x property of the result
-    theta = res.x
 
-    utils.plotDecisionBoundary(regularized_logistic_regression.plotData, theta, X, y)
-    plt.xlabel('Microchip Test 1')
-    plt.ylabel('Microchip Test 2')
-    plt.legend(['y = 1', 'y = 0'])
-    plt.grid(False)
-    plt.title('lambda = %0.2f' % lambda_)
 
-    # Compute accuracy on our training set
-    p = regularized_logistic_regression.predict(theta, X)
-
-    print('Train Accuracy: %.1f %%' % (np.mean(p == y) * 100))
-    print('Expected accuracy (with lambda = 1): 83.1 % (approx)\n')

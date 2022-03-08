@@ -1,8 +1,7 @@
-from mimetypes import init
 import numpy as np;
-import utils
-from matplotlib import pyplot as plt
-import scipy.optimize as optimize
+import pandas as pd;
+import matplotlib.pyplot as plt;
+
 
 class week2Ex1():
   
@@ -10,127 +9,115 @@ class week2Ex1():
      np.random.seed(1)
   
   def plotData(self, x, y):
-    fig = plt.figure()
 
-    pos = y == 1
-    neg = y == 0
+    fig = plt.figure()  # open a new figure
+    plt.plot(x, y, 'ro', ms=10, mec='k')
+    plt.ylabel('Profit in $10,000')
+    plt.xlabel('Population of City in 10,000s')
 
-    # Plot Examples
-    plt.plot(X[pos, 0], X[pos, 1], 'k*', lw=2, ms=10)
-    plt.plot(X[neg, 0], X[neg, 1], 'ko', mfc='y', ms=8, mec='k', mew=1)
-  
-  def sigmoid(self, z):
-    z = np.array(z)
-    g = np.zeros(z.shape)
-    g = 1 / (1 + np.exp(-z))
-    return g
-  
-  def costFunction(self, theta, X, y):
-    m = y.size
-    J = 0
-    grad = np.zeros(theta.shape)
-    h = self.sigmoid(X.dot(theta.T))
-    
-    J = (1 / m) * np.sum(-y.dot(np.log(h)) - (1 - y).dot(np.log(1 - h)))
-    grad = (1 / m) * (h - y).dot(X)
-    return J, grad
+  def computeCost(self, X, y, theta):
+    m = y.shape[0];
+    predictions = np.dot(X, theta);
+    sqrError = (predictions - y) ** 2;
 
-  def predict(self, theta, X):
-    m = X.shape[0]
-    p = np.zeros(m)
+    return np.sum(sqrError)/(2*m);
 
-    p = np.round(self.sigmoid(X.dot(theta.T)))
-    return p
+  def linearRegression(self, X,y,theta, alpha, iterations):
+    m = y.shape[0];
+    theta = theta.copy();
+    J_history = []
+    for i in range(iterations):
+      gradJ = (np.dot(X, theta) - y).dot(X);
+      theta = theta - (alpha / m) * gradJ;
+      J_history.append(self.computeCost(X, y, theta));
+    return theta, J_history;
+
+  def featureNormalize(self, X):
+    X_norm = X;
+    mu = np.zeros(np.size(X, 2));
+    sigma = np.zeros(np.size(X, 2));
+    return sigma;
 
 if __name__ == "__main__":
-    logistic_regression = week2Ex1();
+    linear_regression = week2Ex1();
 
-    data = np.loadtxt('ex2data1.txt', delimiter=',');
-    X, y = data[:, 0:2], data[:, 2]
-    [m, n] = X.shape
+    # data = pd.read_csv('ex1data1.txt',names=["X","y"])
 
-    # % Print out some data points
-    print('{:>8s}{:>8s}{:>10s}'.format('X[:,0]', 'X[:, 1]', 'y'))
+    # X = data["X"];
+    # y = data["y"];
+
+    data = np.loadtxt('ex1data1.txt', delimiter=',');
+    X, y = data[:, 0], data[:, 1];
     
-    for i in range(10):
-      print(X[i, 0], X[i, 1], y[i])
+    
+    #data.plot(kind="scatter", x="X", y="y")
 
-    logistic_regression.plotData(X, y)
-    # add axes labels
-    plt.xlabel('Exam 1 score')
-    plt.ylabel('Exam 2 score')
-    plt.legend(['Admitted', 'Not admitted'])
-    pass
+    #plt.show()
 
-    # Add intercept term to X
-    X = np.concatenate([np.ones((m, 1)), X], axis=1)
+    m = y.size
 
-    z = 0
-    g = logistic_regression.sigmoid(z)
+    theta = np.zeros(2)
+    X = np.stack([np.ones(m), X], axis=1)
+    iterations = 1500;
+    alpha = 0.01;
+    
+    J = linear_regression.computeCost(X,y,theta);
 
-    initial_theta = np.zeros(n + 1);
-    cost, grad = logistic_regression.costFunction(initial_theta, X, y)
+    print("with theta=[0 ; 0], Cost computed = %f", J)
+    print('Expected cost value (approx) 32.07');
 
-    print('Cost at initial theta (zeros): {:.3f}'.format(cost))
-    print('Expected cost (approx): 0.693\n')
+    #  further testing of the cost function
+    J = linear_regression.computeCost(X,y,np.array([-1 , 2]));
+    print("with theta=[-1 , 2], Cost computed = %f", J)
 
-    print('Gradient at initial theta (zeros):')
-    print('\t[{:.4f}, {:.4f}, {:.4f}]'.format(*grad))
-    print('Expected gradients (approx):\n\t[-0.1000, -12.0092, -11.2628]\n')
+    theta, J_history = linear_regression.linearRegression(X, y, theta, alpha, iterations);
 
-    # Compute and display cost and gradient with non-zero theta
-    test_theta = np.array([-24, 0.2, 0.2])
-    cost, grad = logistic_regression.costFunction(test_theta, X, y)
+    print('Theta found by gradient descent: {:.4f}, {:.4f}'.format(*theta))
+    print('Expected theta values (approximately): [-3.6303, 1.1664]')
 
-    print('Cost at test theta: {:.3f}'.format(cost))
-    print('Expected cost (approx): 0.218\n')
+    linear_regression.plotData(X[:, 1], y)
+    plt.plot(X[:, 1], np.dot(X, theta), '-')
+    plt.legend(['Training data', 'Linear regression']);
 
-    print('Gradient at test theta:')
-    print('\t[{:.3f}, {:.3f}, {:.3f}]'.format(*grad))
-    print('Expected gradients (approx):\n\t[0.043, 2.566, 2.647]')
-
-    # optimize.minimize will converge on the right optimization parameters 
-    # and return the final values of the cost and in a class object. 
-    # Notice that by using optimize.minimize, 
-    # you did not have to write any loops yourself, 
-    # or set a learning rate like you did for gradient descent.
-
-    # set options for optimize.minimize
-    options= {'maxiter': 400}
-
-    res = optimize.minimize(logistic_regression.costFunction,
-                            initial_theta,
-                            (X, y),
-                            jac=True,
-                            method='TNC',
-                            options=options)
-
-    # the fun property of `OptimizeResult` object returns
-    # the value of costFunction at optimized theta
-    cost = res.fun
-    # the optimized theta is in the x property
-    theta = res.x
-
-    # Print theta to screen
-    print('Cost at theta found by optimize.minimize: {:.3f}'.format(cost))
-    print('Expected cost (approx): 0.203\n');
-
-    print('theta:')
-    print('\t[{:.3f}, {:.3f}, {:.3f}]'.format(*theta))
-    print('Expected theta (approx):\n\t[-25.161, 0.206, 0.201]')
-
-    # Plot Boundary
-    utils.plotDecisionBoundary(logistic_regression.plotData, theta, X, y)
     # plt.show()
 
-    #  Predict probability for a student with score 45 on exam 1 
-    #  and score 85 on exam 2 
-    prob = logistic_regression.sigmoid(np.dot([1, 45, 85], theta))
-    print('For a student with scores 45 and 85,'
-          'we predict an admission probability of {:.3f}'.format(prob))
-    print('Expected value: 0.775 +/- 0.002\n')
+    predict1 = [1, 3.5] *theta;
+    print('For population = 35,000, we predict a profit of %f\n', predict1*10000);
+    predict2 = [1, 7] * theta;
+    print('For population = 70,000, we predict a profit of %f\n', predict2*10000);
 
-    # Compute accuracy on our training set
-    p = logistic_regression.predict(theta, X)
-    print('Train Accuracy: {:.2f} %'.format(np.mean(p == y) * 100))
-    print('Expected accuracy (approx): 89.00 %')
+    # grid over which we will calculate J
+    theta0_vals = np.linspace(-10, 10, 100)
+    theta1_vals = np.linspace(-1, 4, 100)
+
+    # initialize J_vals to a matrix of 0's
+    J_vals = np.zeros((theta0_vals.shape[0], theta1_vals.shape[0]))
+
+    # Fill out J_vals
+    for i, theta0 in enumerate(theta0_vals):
+      for j, theta1 in enumerate(theta1_vals):
+        J_vals[i, j] = linear_regression.computeCost(X, y, [theta0, theta1])
+
+    # Because of the way meshgrids work in the surf command, we need to
+    # transpose J_vals before calling surf, or else the axes will be flipped
+    J_vals = J_vals.T
+    
+    # surface plot
+    fig = plt.figure(figsize=(12, 5))
+    ax = fig.add_subplot(121, projection='3d')
+    ax.plot_surface(theta0_vals, theta1_vals, J_vals, cmap='viridis')
+    plt.xlabel('theta0')
+    plt.ylabel('theta1')
+    plt.title('Surface')
+    
+    # contour plot
+    # Plot J_vals as 15 contours spaced logarithmically between 0.01 and 100
+    ax = plt.subplot(122)
+    plt.contour(theta0_vals, theta1_vals, J_vals, linewidths=2, cmap='viridis', levels=np.logspace(-2, 3, 20))
+    plt.xlabel('theta0')
+    plt.ylabel('theta1')
+    plt.plot(theta[0], theta[1], 'ro', ms=10, lw=2)
+    plt.title('Contour, showing minimum')
+
+    plt.show()
+    pass
