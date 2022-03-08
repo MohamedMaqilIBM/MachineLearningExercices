@@ -45,7 +45,7 @@ class week3Ex1():
 if __name__ == "__main__":
     logistic_regression = week3Ex1();
 
-    data = np.loadtxt('ex2data1.txt', delimiter=',');
+    data = np.loadtxt('exercices/ex2data1.txt', delimiter=',');
     X, y = data[:, 0:2], data[:, 2]
     [m, n] = X.shape
 

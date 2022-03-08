@@ -57,7 +57,7 @@ class week2Ex2():
 if __name__ == "__main__":
     feature_normalize = week2Ex2();
 
-    data = np.loadtxt('ex1data2.txt', delimiter=',');
+    data = np.loadtxt('exercices/ex1data2.txt', delimiter=',');
     X = data[:, :2]
     y = data[:, 2]
     m = y.size

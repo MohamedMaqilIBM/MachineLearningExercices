@@ -54,7 +54,7 @@ class week3Ex2():
 if __name__ == "__main__":
     regularized_logistic_regression = week3Ex2();
 
-    data = np.loadtxt('ex2data2.txt', delimiter=',');
+    data = np.loadtxt('exercices/ex2data2.txt', delimiter=',');
     X, y = data[:, :2], data[:, 2]
     [m, n] = X.shape
 

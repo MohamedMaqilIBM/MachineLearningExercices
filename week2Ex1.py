@@ -46,7 +46,7 @@ if __name__ == "__main__":
     # X = data["X"];
     # y = data["y"];
 
-    data = np.loadtxt('ex1data1.txt', delimiter=',');
+    data = np.loadtxt('exercices/ex1data1.txt', delimiter=',');
     X, y = data[:, 0], data[:, 1];
     
     
